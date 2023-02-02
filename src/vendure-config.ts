@@ -10,6 +10,8 @@ import { AdminUiPlugin } from '@vendure/admin-ui-plugin';
 import 'dotenv/config';
 import path from 'path';
 import { RandomCatPlugin } from './plugins/cats/cat';
+import { compileUiExtensions } from '@vendure/ui-devkit/compiler';
+
 
 const IS_DEV = process.env.APP_ENV === 'dev';
 
@@ -61,7 +63,11 @@ export const config: VendureConfig = {
     },
     // When adding or altering custom field definitions, the database will
     // need to be updated. See the "Migrations" section in README.md.
-    customFields: {},
+    customFields: {
+        Product: [
+            { name: 'intensity', type: 'int', min: 0, max: 100, defaultValue: 0 },
+          ],
+    },
     plugins: [
         RandomCatPlugin,
         AssetServerPlugin.init({
@@ -90,8 +96,20 @@ export const config: VendureConfig = {
             },
         }),
         AdminUiPlugin.init({
-            route: 'admin',
-            port: 3002,
+            port: 5001,
+            app: compileUiExtensions({
+                outputPath: path.join(__dirname, '../admin-ui'),
+                extensions: [{
+                    extensionPath: path.join(__dirname, 'ui-extensions'),
+                    ngModules: [{
+                        type: 'lazy',
+                        route: 'greet',
+                        ngModuleFileName: 'greeter.module.ts',
+                        ngModuleName: 'GreeterModule',
+                    }],
+                }],
+            }),
+            route: 'greet'
         }),
     ],
 };
